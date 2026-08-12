@@ -1,0 +1,50 @@
+{
+  "name": "frame-probe",
+  "version": "0.1.0",
+  "description": "Find out why an animated web app drops frames. Drives Chrome over CDP, records per-frame timings and renderer internals, and analyzes DevTools traces. No dependencies.",
+  "type": "module",
+  "bin": {
+    "frame-probe": "./bin/frame-probe.mjs"
+  },
+  "exports": {
+    ".": "./src/run.mjs",
+    "./analyze": "./src/analyze.mjs",
+    "./trace": "./src/trace.mjs",
+    "./cdp": "./src/cdp.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "examples",
+    "README.md",
+    "README.ko.md",
+    "AGENTS.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "demo": "node ./examples/demo/serve.mjs"
+  },
+  "keywords": [
+    "performance",
+    "profiling",
+    "frame-rate",
+    "jank",
+    "cdp",
+    "chrome-devtools-protocol",
+    "webgl",
+    "pixijs",
+    "canvas",
+    "animation"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/<you>/frame-probe.git"
+  },
+  "homepage": "https://github.com/<you>/frame-probe#readme",
+  "bugs": {
+    "url": "https://github.com/<you>/frame-probe/issues"
+  }
+}

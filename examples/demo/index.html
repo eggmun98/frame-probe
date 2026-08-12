@@ -1,0 +1,58 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>frame-probe demo</title>
+<style>
+  body { font: 14px system-ui; margin: 0; background: #111; color: #eee; }
+  canvas { display: block; }
+  #ui { position: fixed; top: 12px; left: 12px; }
+  button { font: inherit; padding: 6px 14px; }
+</style>
+<canvas id="c" width="900" height="600"></canvas>
+<div id="ui"><button id="go">run</button> <span id="state">idle</span></div>
+<script>
+  // A deliberately janky animation: a steady rAF loop, plus a burst of DOM work
+  // ~400ms into each "action". frame-probe should find the burst.
+  const ctx = document.getElementById('c').getContext('2d');
+  const stateEl = document.getElementById('state');
+  let t = 0, busyUntil = 0, burstAt = 0, burstDone = true;
+
+  function frame(now) {
+    t += 1;
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, 900, 600);
+    for (let i = 0; i < 60; i++) {
+      ctx.fillStyle = `hsl(${(t + i * 6) % 360} 70% 55%)`;
+      ctx.fillRect(20 + i * 14, 300 + Math.sin((t + i * 8) / 20) * 180, 10, 10);
+    }
+    if (!burstDone && now >= burstAt) {
+      burstDone = true;
+      // The bug we are simulating: a pile of elements created in one frame.
+      const host = document.createElement('div');
+      for (let i = 0; i < 12000; i++) {
+        const el = document.createElement('span');
+        el.textContent = String(i);
+        host.appendChild(el);
+      }
+      document.body.appendChild(host);
+      host.remove();
+    }
+    if (busyUntil && now > busyUntil) {
+      busyUntil = 0;
+      document.body.dataset.state = 'idle';
+      stateEl.textContent = 'idle';
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  document.body.dataset.state = 'idle';
+  document.getElementById('go').addEventListener('click', async () => {
+    document.body.dataset.state = 'busy';
+    stateEl.textContent = 'busy';
+    await fetch('/api/action').catch(() => {});
+    const now = performance.now();
+    burstAt = now + 400;
+    burstDone = false;
+    busyUntil = now + 2000;
+  });
+</script>
