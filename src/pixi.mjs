@@ -34,14 +34,23 @@ export function buildPixiPatch({
     .filter((n) => new RegExp(${JSON.stringify(urlPattern)}, 'i').test(n));
   const candidates = [...new Set([...${JSON.stringify(moduleUrls)}, ...found])];
 
+  // Careful: wrapper libraries (pixi-svelte, pixi-react, …) also export a name like
+  // "Container", but it's a framework component, not the Pixi class. Only accept a module
+  // whose Container actually has Pixi's prototype methods.
+  const isRealPixi = (m) =>
+    m && typeof m.Container === 'function' &&
+    m.Container.prototype && typeof m.Container.prototype.addChild === 'function';
+
   let pixi = null;
+  const rejected = [];
   for (const url of candidates) {
     try {
       const m = await import(url);
-      if (m && (m.Container || m.Ticker)) { pixi = m; P.pixiUrl = url; break; }
+      if (isRealPixi(m)) { pixi = m; P.pixiUrl = url; break; }
+      if (m && m.Container) rejected.push(url);
     } catch (e) { /* not a module, keep looking */ }
   }
-  if (!pixi) return { ok: false, tried: candidates.slice(0, 10) };
+  if (!pixi) return { ok: false, tried: candidates.slice(0, 10), lookedLikePixiButWasnt: rejected.slice(0, 5) };
 
   if (pixi.Ticker && pixi.Ticker.shared) {
     P.ticker = pixi.Ticker.shared;
